@@ -45,9 +45,8 @@ class DeviceUser(AbstractBaseUser, PermissionsMixin):
 
 
 class ScanRecord(models.Model):
-    user = models.ForeignKey(DeviceUser, on_delete=models.CASCADE)
-    device_id = models.CharField(max_length=50)  
-    object_name = models.CharField(max_length=50, default='object_name')
+    device_id = models.ForeignKey(DeviceUser, on_delete=models.CASCADE, related_name='scan_records')  
+    object_name = models.CharField(max_length=50)
     point_name = models.CharField(max_length=100)
     scan_date = models.DateField(default=now)
     scan_time = models.TimeField(default=now)

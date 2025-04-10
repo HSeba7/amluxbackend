@@ -33,7 +33,7 @@ class DeviceUserAdmin(UserAdmin):
 
 @admin.register(ScanRecord)
 class ScanRecordAdmin(admin.ModelAdmin):
-    list_display = ('user', 'device_id', 'point_name', 'scan_date', 'scan_time', 'card_name', 'card_surname', 'is_valid')
+    list_display = ('device_id', 'point_name', 'scan_date', 'scan_time', 'card_name', 'card_surname', 'is_valid')
     ordering = ('-scan_date', '-scan_time')
 
 
