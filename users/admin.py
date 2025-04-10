@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
-from .models import DeviceUser, ScanRecord
+from .models import DeviceUser, ScanRecord, Object
 
 @admin.register(DeviceUser)
 class DeviceUserAdmin(UserAdmin):
@@ -35,3 +35,10 @@ class DeviceUserAdmin(UserAdmin):
 class ScanRecordAdmin(admin.ModelAdmin):
     list_display = ('user', 'device_id', 'point_name', 'scan_date', 'scan_time', 'card_name', 'card_surname', 'is_valid')
     ordering = ('-scan_date', '-scan_time')
+
+
+
+@admin.register(Object)
+class ObjectAdmin(admin.ModelAdmin):
+    list_display = ('name',)
+    search_fields = ('name',)
