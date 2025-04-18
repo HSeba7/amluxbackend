@@ -5,7 +5,8 @@ from .models import DeviceUser, ScanRecord, Object
 @admin.register(DeviceUser)
 class DeviceUserAdmin(UserAdmin):
     model = DeviceUser
-    list_display = ('device_id', 'object_name', 'point_name', 'is_staff')
+    list_display = ('device_id', 'object_name', 'point_name','created_date','created_time', 'is_active', 'is_staff')
+    search_fields = ('device_id', 'object_name__name', 'point_name')
 
     fieldsets = (
         (None, {'fields': ('device_id', 'password')}),
@@ -29,16 +30,15 @@ class DeviceUserAdmin(UserAdmin):
         super().save_model(request, obj, form, change)
 
 
-
-
 @admin.register(ScanRecord)
 class ScanRecordAdmin(admin.ModelAdmin):
-    list_display = ('device_id', 'point_name', 'scan_date', 'scan_time', 'card_name', 'card_surname', 'is_valid')
+    list_display = ('user', 'object_name', 'point_name', 'scan_date', 'scan_time', 'card_name', 'card_surname', 'is_valid')
+    search_fields = ('user__device_id', 'object_name', 'point_name', 'card_name', 'card_surname')
+    list_filter = ('is_valid', 'scan_date')
     ordering = ('-scan_date', '-scan_time')
-
 
 
 @admin.register(Object)
 class ObjectAdmin(admin.ModelAdmin):
-    list_display = ('name',)
+    list_display = ('name', 'created_at')
     search_fields = ('name',)

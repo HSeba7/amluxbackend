@@ -10,29 +10,31 @@ class Object(models.Model):
     def __str__(self):
         return self.name
 
+
 class DeviceUserManager(BaseUserManager):
     def create_user(self, device_id, password=None, **extra_fields):
         if not device_id:
             raise ValueError('Device ID is required')
 
         user = self.model(device_id=device_id, **extra_fields)
-        user.set_password(password)          
-        user.raw_password = password          
+        user.set_password(password)
         user.save()
         return user
-
 
     def create_superuser(self, device_id, password=None, **extra_fields):
         extra_fields.setdefault('is_staff', True)
         extra_fields.setdefault('is_superuser', True)
         return self.create_user(device_id, password, **extra_fields)
 
+
 class DeviceUser(AbstractBaseUser, PermissionsMixin):
     device_id = models.CharField(max_length=50, unique=True)
-    object_name = models.ForeignKey(Object, on_delete=models.SET_NULL, related_name='users', null=True,blank=True)  
+    object_name = models.ForeignKey(
+        Object, on_delete=models.SET_NULL, related_name='users', null=True, blank=True
+    )
     point_name = models.CharField(max_length=100)
-
-    raw_password = models.CharField(max_length=128, blank=True, null=True)
+    created_date = models.DateTimeField(null=True, blank=True)  # Allow null/blank for manual creation
+    created_time = models.TimeField(null=True, blank=True)  # Allow null/blank for manual creation
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
 
@@ -40,12 +42,21 @@ class DeviceUser(AbstractBaseUser, PermissionsMixin):
 
     objects = DeviceUserManager()
 
+    def save(self, *args, **kwargs):
+        # Set created_date and created_time only when the object is created
+        if not self.pk:  # Check if the object is being created
+            self.created_date = now()
+            self.created_time = now().time()
+        super().save(*args, **kwargs)
+
     def __str__(self):
         return self.device_id
 
 
 class ScanRecord(models.Model):
-    device_id = models.ForeignKey(DeviceUser, on_delete=models.CASCADE, related_name='scan_records')  
+    user = models.ForeignKey(
+        DeviceUser, on_delete=models.CASCADE, related_name='scan_records'
+    )  # Changed field name from `device_id` to `user` for clarity
     object_name = models.CharField(max_length=50)
     point_name = models.CharField(max_length=100)
     scan_date = models.DateField(default=now)
@@ -55,6 +66,6 @@ class ScanRecord(models.Model):
     is_valid = models.BooleanField(default=False)
 
     def __str__(self):
-        return f"{self.device_id} - {self.card_name} {self.card_surname}"
+        return f"{self.user.device_id} - {self.card_name} {self.card_surname}"
 
 

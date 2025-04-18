@@ -6,7 +6,7 @@ from rest_framework.authtoken.models import Token
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.authentication import TokenAuthentication
 from django.utils.timezone import now
-from users.models import ScanRecord
+from users.models import ScanRecord, DeviceUser
 
 import logging
 logger = logging.getLogger(__name__)
@@ -82,40 +82,64 @@ class SubmitScanAPIView(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        # Simulate control check
-        is_valid = card_control == 'VALID123'
+        # Save the scan record
+        scan = ScanRecord.objects.create(
+            user=user,
+            object_name=user.object_name.name if user.object_name else None,
+            point_name=user.point_name,
+            scan_date=now().date(),
+            scan_time=now().time(),
+            card_name=card_name,
+            card_surname=card_surname,
+            is_valid=True  # Assuming all scans are valid for now
+        )
+        logger.info(f"Scan saved: {scan}")
 
-        if is_valid:
-            scan = ScanRecord.objects.create(
-                user=user,
-                device_id=user.device_id,
-                object_name=user.object_name,
-                point_name=user.point_name,
-                scan_date=now().date(),
-                scan_time=now().time(),
-                card_name=card_name,
-                card_surname=card_surname,
-                is_valid=True
-            )
-            logger.info(f"Valid scan saved: {scan}")
+        return Response({
+            'status': 'success',
+            'message': 'Scan data saved successfully.',
+            'data': {
+                'device_id': user.device_id,
+                'object_name': user.object_name.name if user.object_name else None,
+                'point_name': user.point_name,
+                'scan_date': str(scan.scan_date),
+                'scan_time': str(scan.scan_time),
+                'card_name': card_name,
+                'card_surname': card_surname,
+                'card_control': card_control  # Include card_control in the response
+            }
+        }, status=status.HTTP_200_OK)
+        
 
-            return Response({
-                'status': 'success',
-                'message': 'Card is valid.',
-                'data': {
-                    'device_id': user.device_id,
-                    'object_name': user.object_name,
-                    'point_name': user.point_name,
-                    'scan_date': str(scan.scan_date),
-                    'scan_time': str(scan.scan_time),
-                    'card_name': card_name,
-                    'card_surname': card_surname
-                }
-            }, status=status.HTTP_200_OK)
+class GetDetails(APIView):
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
 
-        else:
-            logger.warning(f"Invalid card scan attempt by user {user.device_id}")
-            return Response({
-                'status': 'failed',
-                'message': 'Invalid card.'
-            }, status=status.HTTP_403_FORBIDDEN)
+    def get(self, request):
+        try:
+            # Fetch user details from DeviceUser model
+            user = DeviceUser.objects.get(device_id=request.user.device_id)
+
+            # Fetch the latest scan record, if it exists
+            scan_record = ScanRecord.objects.filter(user=user).order_by('-scan_date', '-scan_time').first()
+
+            # Prepare the response data
+            data = {
+                'device_id': user.device_id,
+                'object_name': user.object_name.name if user.object_name else None,
+                'point_name': user.point_name,
+                'created_at': user.object_name.created_at if user.object_name else None,
+                'scan_date': scan_record.scan_date if scan_record else None,
+                'scan_time': scan_record.scan_time if scan_record else None,
+                'card_name': scan_record.card_name if scan_record else None,
+                'card_surname': scan_record.card_surname if scan_record else None,
+                'is_valid': scan_record.is_valid if scan_record else None,
+            }
+
+            return Response(data, status=status.HTTP_200_OK)
+
+        except DeviceUser.DoesNotExist:
+            return Response({'error': 'User not found.'}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            logger.error(f"Error fetching user details: {str(e)}", exc_info=True)
+            return Response({'error': 'An unexpected error occurred.'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
