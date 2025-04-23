@@ -56,13 +56,14 @@ class DeviceUser(AbstractBaseUser, PermissionsMixin):
 class ScanRecord(models.Model):
     user = models.ForeignKey(
         DeviceUser, on_delete=models.CASCADE, related_name='scan_records'
-    )  # Changed field name from `device_id` to `user` for clarity
+    )  
     object_name = models.CharField(max_length=50)
     point_name = models.CharField(max_length=100)
     scan_date = models.DateField(default=now)
     scan_time = models.TimeField(default=now)
-    card_name = models.CharField(max_length=100)
-    card_surname = models.CharField(max_length=100)
+    card_name = models.CharField(max_length=100, null=True, blank=True)
+    card_surname = models.CharField(max_length=100, null=True, blank=True)
+    card_response = models.CharField(max_length=100, null=True, blank=True)
     is_valid = models.BooleanField(default=False)
 
     def __str__(self):

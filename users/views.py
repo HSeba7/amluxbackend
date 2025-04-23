@@ -74,6 +74,7 @@ class SubmitScanAPIView(APIView):
         card_name = request.data.get('card_name')
         card_surname = request.data.get('card_surname')
         card_control = request.data.get('card_control')
+        card_response = request.data.get('card_response')  
 
         if not all([card_name, card_surname, card_control]):
             logger.warning(f"Missing scan data from user {user.device_id}")
@@ -91,7 +92,8 @@ class SubmitScanAPIView(APIView):
             scan_time=now().time(),
             card_name=card_name,
             card_surname=card_surname,
-            is_valid=True  # Assuming all scans are valid for now
+            card_response=card_response,  
+            is_valid=True  
         )
         logger.info(f"Scan saved: {scan}")
 
@@ -106,7 +108,8 @@ class SubmitScanAPIView(APIView):
                 'scan_time': str(scan.scan_time),
                 'card_name': card_name,
                 'card_surname': card_surname,
-                'card_control': card_control  # Include card_control in the response
+                'card_control': card_control,
+                'card_response': card_response  # Include card_response in the response
             }
         }, status=status.HTTP_200_OK)
         
@@ -120,7 +123,6 @@ class GetDetails(APIView):
             # Fetch user details from DeviceUser model
             user = DeviceUser.objects.get(device_id=request.user.device_id)
 
-            # Fetch the latest scan record, if it exists
             scan_record = ScanRecord.objects.filter(user=user).order_by('-scan_date', '-scan_time').first()
 
             # Prepare the response data
@@ -133,6 +135,7 @@ class GetDetails(APIView):
                 'scan_time': scan_record.scan_time if scan_record else None,
                 'card_name': scan_record.card_name if scan_record else None,
                 'card_surname': scan_record.card_surname if scan_record else None,
+                'card_response': scan_record.card_response if scan_record else None,
                 'is_valid': scan_record.is_valid if scan_record else None,
             }
 
