@@ -69,4 +69,22 @@ class ScanRecord(models.Model):
     def __str__(self):
         return f"{self.user.device_id} - {self.card_name} {self.card_surname}"
 
+class ClockInAndOut(models.Model):
+    ACTION_CHOICES = [
+        ('clock_in', 'Clock In'),
+        ('clock_out', 'Clock Out'),
+    ]
+    name = models.CharField(max_length=50,null=True,blank=True) 
+    object_name = models.CharField(max_length=50, null=True, blank=True)
+    birthyear = models.CharField(max_length=10,null=True,blank=True)
+    surname = models.CharField(max_length=10,null=True,blank=True)
+    card_response = models.CharField(max_length=100, null=True, blank=True)
+    clock_in_time = models.DateTimeField(auto_now_add=True)
+    clock_out_time = models.DateTimeField(null=True, blank=True)
+    action_type = models.CharField(max_length=10, choices=ACTION_CHOICES, default='clock_in')
 
+    def __str__(self):
+        return f"{self.name} - {self.action_type} at {self.clock_in_time}"
+
+    class Meta:
+        ordering = ['-clock_in_time', '-clock_out_time']
